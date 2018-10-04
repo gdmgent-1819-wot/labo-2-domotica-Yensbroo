@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="./assets/css/style.css">
+  <title>Room controller</title>
+</head>
+
+<body>
+  <div class="user_actions">
+    <button onclick="logout()" class="logout">Logout</button>
+  </div>
+  <div class="user_form">
+    <div class="user_form-wrapper">
+      <h1>Domotica dashboard</h1>
+      <h3>(login: email: test@test.com password: test123)</h3>
+      <p class="error"></p>
+      <div class="form-group">
+        <label for="email">Email</label><br>
+        <input type="text" class="email">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label><br>
+        <input type="password" class="password">
+      </div>
+      <button onclick="login()" class="login">Login</button>
+    </div>
+  </div>
+  <div class="room"></div>
+  <button class="alarm">ALARM!</button>
+  <script src="https://www.gstatic.com/firebasejs/5.5.2/firebase.js"></script>
+  <script src="./assets/js/config.js"></script>
+  <script src="./assets/js/app.js"></script>
+  <script src="./assets/js/auth.js"></script>
+</body>
+
+</html>
