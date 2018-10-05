@@ -9,34 +9,34 @@ import sys
 black = (0, 0, 0)
 green = (0, 255, 0)
 blue = (0, 0, 255)
-red = (255, 0, 0)
 yellow = (255, 255, 0)
-dark_yellow = (204, 204, 0)
-dark_blue = (0, 0, 153)
+red = (255, 0, 0)
+orange = (255, 153, 0)
+dark_blue = (0, 51, 102)
 
-room_matrix = [
-    0, 0, 1, 0, 0, 1, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    2, 0, 0, 0, 0, 0, 0, 2,
-    0, 0, 1, 0, 0, 1, 0, 0,
-    3, 0, 0, 0, 0, 0, 0, 3,
-    3, 0, 0, 0, 0, 0, 0, 3,
-    3, 0, 0, 2, 2, 0, 0, 3
+TEMP_CORRECTION_FACTOR = 1.5
+
+room_state = [
+    'f', 'f', 'l', 'f', 'f', 'l', 'f', 'f',
+    'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f',
+    'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f',
+    'o', 'f', 'f', 'f', 'f', 'f', 'f', 'o',
+    'f', 'f', 'l', 'f', 'f', 'l', 'f', 'f',
+    'd', 'f', 'f', 'f', 'f', 'f', 'f', 'd',
+    'd', 'f', 'f', 'f', 'f', 'f', 'f', 'd',
+    'd', 'f', 'f', 'o', 'o', 'f', 'f', 'd'
 ]
 
 room_alarm = [
-    0, 0, 7, 0, 0, 7, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    7, 0, 0, 0, 0, 0, 0, 7,
-    0, 0, 7, 0, 0, 7, 0, 0,
-    7, 0, 0, 0, 0, 0, 0, 7,
-    7, 0, 0, 0, 0, 0, 0, 7,
-    7, 0, 0, 7, 7, 0, 0, 7
+    'f', 'f', 'dc', 'f', 'f', 'dc', 'f', 'f',
+    'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f',
+    'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f',
+    'dc', 'f', 'f', 'f', 'f', 'f', 'f', 'dc',
+    'f', 'f', 'dc', 'f', 'f', 'dc', 'f', 'f',
+    'dc', 'f', 'f', 'f', 'f', 'f', 'f', 'dc',
+    'dc', 'f', 'f', 'f', 'f', 'f', 'f', 'dc',
+    'dc', 'f', 'f', 'dc', 'dc', 'f', 'f', 'dc'
 ]
-
-TEMP_CORRECTION_FACTOR = 1.5
 
 serviceAccountKey = "../keys/serviceAccountKey.json"
 databaseURL = "https://domotica-205ee.firebaseio.com/"
@@ -45,14 +45,20 @@ try:
     firebase_cred = credentials.Certificate(serviceAccountKey)
 
     firebase_admin.initialize_app(firebase_cred, {
-        "databaseURL": databaseURL
+        'databaseURL': databaseURL
     })
-    print('firebase initialized')
 
-    firebase_ref_pi_domotica = db.reference("room")
-
+    ref = db.reference('room')
 except:
     print('Unable to initialize Firebase: {}'.format(sys.exc_info()[0]))
+    sys.exit(1)
+
+try:
+    sense_hat = SenseHat()
+    sense_hat.set_imu_config(False, False, False)
+except:
+    print('Unable to initialize the Sense hat library: {}'.format(
+        sys.exc_info()[0]))
     sys.exit(1)
 
 
@@ -90,92 +96,80 @@ def get_temp(with_case):
     return(temp_smooth)
 
 
-def generate_room(state):
-    matrix = []
+def check_alarm():
+    current_alarm = ref.child('alarm').get()
+
+    if current_alarm is None:
+        ref.child('alarm').set(False)
+    elif current_alarm:
+        for i in range(0, 8):
+            alarm_on = generate_room(room_alarm)
+            sense_hat.set_pixels(alarm_on)
+            sleep(1)
+            alarm_off = generate_room(room_state)
+            sense_hat.set_pixels(alarm_off)
+            sleep(1)
+            ref.child('alarm').set(False)
+
+
+def generate_room(matrix):
+    room_matrix = []
     color = None
-    for p in range(0, 64):
-        bit = state[p]
-        if bit == 0:
+    for b in range(0, 64):
+        bit = matrix[b]
+        if bit == 'f':
             color = black
-        elif bit == 1:
+        elif bit == 'l':
             color = yellow
-        elif bit == 2:
+        elif bit == 'o':
             color = blue
-        elif bit == 3:
+        elif bit == 'd':
             color = green
-        elif bit == 7:
+        elif bit == 'dc':
             color = red
-        elif bit == 5:
-            color = dark_yellow
-        elif bit == 6:
+        elif bit == 'lo':
+            color = orange
+        elif bit == 'oo':
             color = dark_blue
-        matrix.append(color)
-    return(matrix)
+        room_matrix.append(color)
 
-def check_alarm(): 
-  current_alarm = firebase_ref_pi_domotica.child('alarm').get()
+    return room_matrix
 
-  if current_alarm is None:
-    firebase_ref_pi_domotica.child('alarm').set(False)
-  elif current_alarm:
-    for i in range(0, 15):
-      alarm_on = generate_room(room_alarm)
-      sense_hat.set_pixels(alarm_on)
-      sleep(1)
-      alarm_off = generate_room(room_matrix)
-      sense_hat.set_pixels(alarm_off)
-      sleep(1)
-      firebase_ref_pi_domotica.child('alarm').set(False)
 
-def get_current_room_state():
-    current_state = firebase_ref_pi_domotica.child('room_1').get()
-    state = []
-    if current_state is not None: 
-        # convert value string to array
-        val_arr = list(current_state)
+def push_matrix_to_db(matrix):
+    ref.child('state').set(matrix)
 
-        # convert every string in list to integer
-        bit_list = list(map(int, val_arr))
-        room_state = generate_room(bit_list)
-        sense_hat.set_pixels(room_state)
+
+def get_data_from_db():
+    data = ref.child('state').get()
+    print(data)
+
+    if data is not None:
+        pattern = generate_room(data)
+        sense_hat.set_pixels(pattern)
     else:
-        current_room = generate_room(room_matrix)
-        room_string = ''.join(str(e) for e in room_matrix)
-        sense_hat.set_pixels(current_room)
-        firebase_ref_pi_domotica.child('room_1').set(room_string)
-
-
-try:
-    # SenseHat
-    sense_hat = SenseHat()
-    sense_hat.set_imu_config(False, False, False)
-except:
-    print('Unable to initialize the Sense hat library: {}'.format(
-        sys.exc_info()[0]))
-    sys.exit(1)
+        pattern = generate_room(room_state)
+        sense_hat.set_pixels(pattern)
+        push_matrix_to_db(room_state)
 
 
 def main():
     while True:
-        # generate_room(room_matrix)
-        get_current_room_state()
+        get_data_from_db()
         temp = round(get_temp(True))
         humidity = round(sense_hat.get_humidity())
-        firebase_ref_pi_domotica.child('conditions').set({
-        'current_temperature': temp,
-        'current_humidity': humidity
+        ref.child('conditions').set({
+            'current_temperature': temp,
+            'current_humidity': humidity
         })
         check_alarm()
-       
-        
 
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     try:
         main()
-    except (KeyboardInterrupt, SystemExit):
+    except(KeyboardInterrupt, SystemExit):
         print('Interrupt received! Stopping the application...')
     finally:
-        print('Cleaning up the mess...')
+        print('Cleaning up the mess')
         sys.exit(0)

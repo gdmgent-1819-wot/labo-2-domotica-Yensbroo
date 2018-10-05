@@ -63,52 +63,35 @@ input {
   display: none;
 }
 
-.led {
+.bit {
   display: inline-block;
   border: 1px solid black;
   width: 40px;
   height: 40px;
 }
 
-[data-object="light_one"],
-[data-object="light_two"],
-[data-object="light_three"],
-[data-object="light_four"] {
+[data-object='light'] {
   background: yellow;
 }
 
-[data-object="light_one_out"],
-[data-object="light_two_out"],
-[data-object="light_three_out"],
-[data-object="light_four_out"] {
-  background: #b2a10a;
-}
-
-
-[data-object="floor"] {
-  background: white;
-}
-
-[data-object="frontDoor"],
-[data-object="backDoor"] {
+[data-object='front_door'],
+[data-object='back_door'] {
   background: green;
 }
 
-[data-object="frontDoor_closed"],
-[data-object="backDoor_closed"] {
-  background: red;
-}
-
-[data-object="outlet_one"],
-[data-object="outlet_two"],
-[data-object="outlet_three"],
-[data-object="outlet_four"] {
+[data-object='outlet'] {
   background: blue;
 }
 
-[data-object="outlet_one_out"],
-[data-object="outlet_two_out"],
-[data-object="outlet_three_out"],
-[data-object="outlet_four_out "] {
+[data-object='light_out'] {
+  background: #b2a10a;
+}
+
+[data-object='outlet_out'] {
   background: #011d66;
+}
+
+[data-object='front_door_closed'],
+[data-object='back_door_closed'] {
+  background: red;
 }
