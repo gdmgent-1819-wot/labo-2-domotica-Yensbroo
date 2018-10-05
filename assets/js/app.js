@@ -12,11 +12,13 @@
 
       this.roomElement = document.querySelector('.room');
       this.alarmBtn = document.querySelector('.alarm');
+      this.conditions = document.querySelector('.conditions');
 
 
       this.makeRoom();
       this.setObjects();
       this.setAlarm();
+      this.getConditions();
     },
 
     getRoomState: function (cb) {
@@ -152,6 +154,19 @@
         }
       }
 
+    },
+
+    getConditions: function () {
+      let tempStr = '';
+      this.database.ref().child('room/conditions').on('value', (snap) => {
+        let temp = snap.val().current_temperature;
+        let hum = snap.val().current_humidity;
+        tempStr = `
+        <div class="temperature"><p>temperature: <br> ${temp}</p></div>
+        <div class="humidity"><p>humidity: <br> ${hum}</p></div>
+        `
+        this.conditions.innerHTML = tempStr;
+      })
     },
 
     replaceString: function (pattern, i, d, string) {

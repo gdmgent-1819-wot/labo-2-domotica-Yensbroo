@@ -26,6 +26,20 @@ button {
   justify-content: center
 }
 
+.conditions {
+  display: flex;
+}
+
+.temperature {
+  margin-right: 20px;
+}
+
+.temperature,
+.humidity {
+  text-align: center;
+  font-family: sans-serif;
+}
+
 .user_form-wrapper {
   width: 100%;
 }
